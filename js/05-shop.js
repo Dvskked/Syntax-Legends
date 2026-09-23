@@ -1,0 +1,634 @@
+/**
+ * ==== TIENDA ====
+ * Compra de sobres, animación de apertura (carta por carta) y canje de gemas.
+ * Además, el MARKETPLACE ofrece artículos de 12 horas (comodín de oro y gemas).
+ * @module shop
+ */
+(function () {
+  'use strict';
+  var OU = window.OU = window.OU || {};
+  var U = OU.UTIL, I = OU.UI;
+
+  var openingBusy = false;
+
+  /* Arte de los sobres: imágenes locales por tipo de sobre. */
+  var PACK_IMG = {
+    bronze: 'img/sobres/sobre_bronce.jpg',
+    silver: 'img/sobres/sobre_plata.jpg',
+    goldc: 'img/sobres/sobre_oro.jpg',
+    epic: 'img/sobres/sobre_epico.jpg',
+    olympus: 'img/sobres/sobre_olimpo.png',
+    divine: 'img/sobres/sobre_divino.png',
+    cosmic: 'img/sobres/sobre_cosmico.png'
+  };
+
+  /* ---------- MARKETPLACE (ofertas de 12 h) ---------- */
+
+  var OFFER_WEIGHTS = [
+    { t: 'card', w: 30 },
+    { t: 'gold', w: 15 },
+    { t: 'gems', w: 13 },
+    { t: 'xpAll', w: 15 },
+    { t: 'upgrade', w: 13 },
+    { t: 'boost', w: 14 }
+  ];
+
+  function weightedType() {
+    var total = OFFER_WEIGHTS.reduce(function (a, o) { return a + o.w; }, 0);
+    var r = Math.random() * total;
+    for (var i = 0; i < OFFER_WEIGHTS.length; i++) {
+      r -= OFFER_WEIGHTS[i].w;
+      if (r <= 0) return OFFER_WEIGHTS[i].t;
+    }
+    return 'card';
+  }
+
+  function pickRarity() {
+    var r = Math.random();
+    if (r < 0.30) return 'normal';
+    if (r < 0.70) return 'hero';
+    if (r < 0.90) return 'god';
+    if (r < 0.98) return 'titan';
+    return 'primordial';
+  }
+
+  /** Genera un artículo del Marketplace. */
+  function makeOffer(type) {
+    var st = OU.STATE.state;
+    var maxLvlPower = 0;
+    var owned = OU.STATE.ownedList();
+    owned.forEach(function (id) { maxLvlPower = Math.max(maxLvlPower, U.powerOf(id, st.cards[id].lvl)); });
+    var prg = 1 + st.stage * 0.06 + Math.min(st.lvl, 100) * 0.04;
+    if (type === 'card') {
+      var rar = pickRarity();
+      var pool = OU.CARDS_BY_RAR[rar];
+      var card = U.pick(pool);
+      var priceMul = { normal: 1.2, hero: 1.6, god: 2.3, titan: 3.4, primordial: 5.5 }[rar];
+      var price = Math.max(250, Math.round(U.powerOf(card.id, 1) * priceMul * prg / 3));
+      return { t: 'card', id: card.id, cost: { gold: U.clamp(price, 250, 40000) }, tag: rar };
+    }
+    if (type === 'gold') {
+      var gAmt = Math.round((1800 + st.lvl * 90 + st.stage * 120) * prg / 2);
+      return { t: 'gold', g: U.clamp(gAmt, 1500, 60000), cost: { gems: Math.max(6, Math.round(gAmt / 320)) } };
+    }
+    if (type === 'gems') {
+      var gm = Math.max(6, Math.round((8 + st.lvl * 0.6 + st.stage * 0.8) * prg / 2));
+      return { t: 'gems', g: U.clamp(gm, 6, 60), cost: { gold: Math.round(gm * 90) } };
+    }
+    if (type === 'xpAll') {
+      var xpN = Math.round((450 + st.lvl * 40 + st.stage * 30) * prg / 2);
+      return { t: 'xpAll', xp: U.clamp(xpN, 500, 20000), cost: { gold: Math.round(xpN * 1.5) } };
+    }
+    if (type === 'upgrade') {
+      return { t: 'upgrade', cost: { gold: Math.round(2000 * prg) }, cid: null };
+    }
+    if (type === 'freeGod') {
+      // Regalo gratuito: 1 carta de rango alto aleatoria, máximo UNA carta gratuita al día.
+      var god = U.pick(OU.CARDS_BY_RAR.god);
+      return { t: 'freeGod', id: god.id, cost: { gold: 0 }, tag: 'god' };
+    }
+    // boost
+    return { t: 'boost', cost: { gold: Math.round(2600 * prg) } };
+  }
+
+  function todayStrShop() { return new Date().toISOString().slice(0, 10); }
+
+  /** Asegura que el Marketplace esté generado y vigente (12 h). */
+  function ensureBazaar() {
+    var st = OU.STATE.state;
+    if (st.shopItems.length && st.shopRefresh > Date.now()) return;
+    var items = [];
+    for (var i = 0; i < 4; i++) items.push(makeOffer(weightedType()));
+    // La 5.ª oferta es una carta de rango alto gratis, pero SOLO una vez por día (no por
+    // renovación): así no se puede farmear refrescando con gemas.
+    var today = todayStrShop();
+    if (st.freeDaily !== today) {
+      items.push(makeOffer('freeGod'));
+      st.freeDaily = today;
+    } else {
+      items.push(makeOffer(weightedType()));
+    }
+    st.shopItems = items;
+    st.shopRefresh = Date.now() + OU.CONST.SHOP_REFRESH_MS;
+    OU.STATE.save();
+  }
+
+  function refreshBazaar() {
+    var st = OU.STATE.state;
+    if (st.gems < OU.CONST.SHOP_REFRESH_GEMS) return I.toast('Necesitas 💎 ' + OU.CONST.SHOP_REFRESH_GEMS);
+    st.gems -= OU.CONST.SHOP_REFRESH_GEMS;
+    st.shopItems = [];
+    ensureBazaar();
+    I.updateTopRes();
+    I.toast('El Marketplace se renovó con nuevas ofertas 🛒');
+    OU.MAIN.render();
+  }
+
+  function offerHTML(o, i) {
+    if (o.t === 'card') {
+      var c = OU.CARD_BY_ID[o.id], r = OU.RAR[c.r];
+      return '<div class="offer-card o-card" data-offer="' + i + '">' +
+        '<div class="oc-badge ' + r.order + '">' + r.name.toUpperCase() + '</div>' +
+        '<div class="oc-art" style="border-color:' + r.color + '">' + I.artHTML(o.id, 'pick-art') + '</div>' +
+        '<div class="oc-name" style="color:' + r.color + '">' + c.n + '</div>' +
+        '<div class="oc-cost gold">🪙 ' + U.fmt(o.cost.gold) + '</div>' +
+        '<div class="oc-cta">Comprar ➜</div>' +
+        '</div>';
+    }
+    if (o.t === 'freeGod') {
+      var fc = OU.CARD_BY_ID[o.id], fr = OU.RAR[fc.r];
+      return '<div class="offer-card o-card o-free" data-offer="' + i + '">' +
+        '<div class="oc-badge" style="color:' + fr.color + ';border-color:' + fr.color + '">RANGO FRAMEWORK GRATIS</div>' +
+        '<div class="oc-art" style="border-color:' + fr.color + '">' + I.artHTML(o.id, 'pick-art') + '</div>' +
+        '<div class="oc-name" style="color:' + fr.color + '">' + fc.n + '</div>' +
+        '<div class="oc-cost free">🆓 GRATIS · 1 por día</div>' +
+        '<div class="oc-cta">Reclamar ➜</div>' +
+        '</div>';
+    }
+    if (o.t === 'gold') {
+      return '<div class="offer-card" data-offer="' + i + '">' +
+        '<div class="oc-ic">🪙</div>' +
+        '<div class="oc-name">Lote de oro</div>' +
+        '<div class="oc-desc">+ ' + U.fmt(o.g) + ' oro al instante</div>' +
+        '<div class="oc-cost gem">💎 ' + U.fmt(o.cost.gems) + '</div>' +
+        '<div class="oc-cta">Comprar ➜</div>' +
+        '</div>';
+    }
+    if (o.t === 'gems') {
+      return '<div class="offer-card" data-offer="' + i + '">' +
+        '<div class="oc-ic">💎</div>' +
+        '<div class="oc-name">Pool de gemas</div>' +
+        '<div class="oc-desc">+ ' + o.g + ' gemas al instante</div>' +
+        '<div class="oc-cost gold">🪙 ' + U.fmt(o.cost.gold) + '</div>' +
+        '<div class="oc-cta">Comprar ➜</div>' +
+        '</div>';
+    }
+    if (o.t === 'xpAll') {
+      return '<div class="offer-card" data-offer="' + i + '">' +
+        '<div class="oc-ic">📚</div>' +
+        '<div class="oc-name">Bootcamp Intensivo</div>' +
+        '<div class="oc-desc">+ ' + U.fmt(o.xp) + ' XP a TODAS tus cartas</div>' +
+        '<div class="oc-cost gold">🪙 ' + U.fmt(o.cost.gold) + '</div>' +
+        '<div class="oc-cta">Comprar ➜</div>' +
+        '</div>';
+    }
+    if (o.t === 'upgrade') {
+      return '<div class="offer-card" data-offer="' + i + '">' +
+        '<div class="oc-ic">🔧</div>' +
+        '<div class="oc-name">Hotfix de Ranura</div>' +
+        '<div class="oc-desc">Sube 1 nivel a una carta a tu elección</div>' +
+        '<div class="oc-cost gold">🪙 ' + U.fmt(o.cost.gold) + '</div>' +
+        '<div class="oc-cta">Comprar ➜</div>' +
+        '</div>';
+    }
+    return '<div class="offer-card" data-offer="' + i + '">' +
+      '<div class="oc-ic">🚀</div>' +
+      '<div class="oc-name">Boost de CI/CD</div>' +
+      '<div class="oc-desc">+' + Math.round((OU.CONST.BOOST_MULT - 1) * 100) + '% ingreso del Repositorio durante 12 h</div>' +
+      '<div class="oc-cost gold">🪙 ' + U.fmt(o.cost.gold) + '</div>' +
+      '<div class="oc-cta">Comprar ➜</div>' +
+      '</div>';
+  }
+
+  function buyOffer(i) {
+    var st = OU.STATE.state;
+    var o = st.shopItems[i];
+    if (!o) return;
+    // validar (excepto 'upgrade', que se cobra al confirmar la carta)
+    if (o.t === 'upgrade') {
+      openUpgradePicker(o);
+      return;
+    }
+    if (o.cost.gold !== undefined) {
+      if (st.gold < o.cost.gold) return I.toast('No tienes suficiente oro 🪙');
+      st.gold -= o.cost.gold;
+    } else {
+      if (st.gems < o.cost.gems) return I.toast('No tienes suficientes gemas 💎');
+      st.gems -= o.cost.gems;
+    }
+    if (o.t === 'card') {
+      if (!st.cards[o.id]) st.cards[o.id] = { lvl: 1, dup: 0, xp: 0 };
+      else st.cards[o.id].dup++;
+      st.seen[o.id] = true;
+      I.toast('🎴 Obtuviste ' + OU.CARD_BY_ID[o.id].n + (st.cards[o.id].dup ? ' (+1 dup)' : ''));
+    } else if (o.t === 'gold') {
+      st.gold += o.g;
+      I.toast('🪙 +' + U.fmt(o.g) + ' oro');
+    } else if (o.t === 'freeGod') {
+      if (!st.cards[o.id]) st.cards[o.id] = { lvl: 1, dup: 0, xp: 0 };
+      else st.cards[o.id].dup++;
+      st.seen[o.id] = true;
+      I.toast('🆓 El stack te obsequia ' + OU.CARD_BY_ID[o.id].n);
+    } else if (o.t === 'gems') {
+      st.gems += o.g;
+      I.toast('💎 +' + o.g + ' gemas');
+    } else if (o.t === 'xpAll') {
+      Object.keys(st.cards).forEach(function (id) { st.cards[id].xp = (st.cards[id].xp || 0) + o.xp; });
+      I.toast('📚 +' + U.fmt(o.xp) + ' XP en todas tus cartas');
+    } else if (o.t === 'boost') {
+      st.boostUntil = Math.max(st.boostUntil, Date.now() + OU.CONST.BOOST_MS);
+      I.toast('🚀 Ingreso del Repositorio +' + Math.round((OU.CONST.BOOST_MULT - 1) * 100) + '% durante 12 h');
+    }
+    st.shopItems.splice(i, 1);
+    OU.STATE.save();
+    I.updateTopRes();
+    OU.MAIN.render();
+  }
+
+  function openUpgradePicker(o) {
+    var st = OU.STATE.state;
+    var owned = OU.STATE.ownedList().filter(function (id) {
+      return st.cards[id].lvl < OU.CONST.MAX_LEVEL;
+    }).sort(function (a, b) { return U.rarityOrder(a, b); });
+    I.openModal(
+      '<div class="sec-title" style="margin-top:8px">🔨 Elige qué carta subirá de nivel</div>' +
+      '<div class="up-cost">Coste: ' + (o.cost.gold !== undefined ? '🪙 ' + U.fmt(o.cost.gold) : '💎 ' + U.fmt(o.cost.gems)) + '</div>' +
+      (owned.length ? owned.map(function (id) {
+        var c = OU.CARD_BY_ID[id], r = OU.RAR[c.r];
+        return '<div class="picker-row" data-up="' + id + '">' +
+          '<div class="pr-icon" style="border-color:' + r.color + '">' + I.artHTML(id, 'pick-art') + '</div>' +
+          '<div class="pr-info">' +
+          '<div class="pr-name" style="color:' + r.color + '">' + c.n + '</div>' +
+          '<div class="pr-meta">' + r.name + ' · NV ' + st.cards[id].lvl + '</div>' +
+          '</div>' +
+          '<div class="pr-check" style="color:var(--gold2)">Subir ➜</div>' +
+          '</div>';
+      }).join('') : '<div class="empty-msg">No hay cartas mejorables (tope NL MAX)</div>') +
+      '<button class="btn btn-ghost btn-block" id="upClose" style="margin-top:12px">Cancelar</button>', true);
+    U.$$('[data-up]', U.$('#overlay')).forEach(function (r) {
+      r.addEventListener('click', function () {
+        if (o.cost.gold !== undefined) {
+          if (st.gold < o.cost.gold) { I.toast('No tienes suficiente oro 🪙'); return; }
+          st.gold -= o.cost.gold;
+        } else {
+          if (st.gems < o.cost.gems) { I.toast('No tienes suficientes gemas 💎'); return; }
+          st.gems -= o.cost.gems;
+        }
+        var id = r.dataset.up;
+        st.cards[id].lvl++;
+        var idx = st.shopItems.indexOf(o);
+        if (idx >= 0) st.shopItems.splice(idx, 1);
+        OU.STATE.save(); I.updateTopRes();
+        I.closeModal();
+        I.toast('🔨 ' + OU.CARD_BY_ID[id].n + ' subió a nivel ' + st.cards[id].lvl);
+        OU.MAIN.render();
+      });
+    });
+    var cl = U.$('#upClose'); if (cl) cl.addEventListener('click', I.closeModal);
+  }
+
+  function timeLeftLabel() {
+    var st = OU.STATE.state;
+    var diff = Math.max(0, st.shopRefresh - Date.now());
+    var h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000);
+    return '⏳ Renovación en ' + h + 'h ' + m + 'm';
+  }
+
+  /* ---------- TIENDA (sobres y Marketplace) ---------- */
+
+  function viewShop() {
+    ensureBazaar();
+    var st = OU.STATE.state;
+    var packs = Object.keys(OU.PACKS).map(function (k) {
+      var p = OU.PACKS[k];
+      var costs = [];
+      if (p.cost.gold !== undefined) costs.push('<span class="gold">🪙 ' + U.fmt(p.cost.gold) + '</span>');
+      if (p.cost.gems !== undefined) costs.push('<span class="gem">💎 ' + U.fmt(p.cost.gems) + '</span>');
+      var oddsRows = p.odds.map(function (o) {
+        var l = o[0], v = o[1];
+        var col = l === 'Legado' ? OU.RAR.primordial.color : l === 'Sistema' ? OU.RAR.titan.color : l === 'Framework' ? OU.RAR.god.color : l === 'Lenguaje' ? OU.RAR.hero.color : 'var(--gray)';
+        return '<div class="o-row"><span class="o-l">' + l + '</span><span class="o-v" style="color:' + col + '">' + v + '</span></div>';
+      }).join('');
+      return '<div class="pack-card ' + p.cls + '" data-pack="' + k + '">' +
+        '<img class="pc-img" src="' + PACK_IMG[p.cls] + '" alt="' + p.name + '" loading="lazy">' +
+        '<div class="pc-name ' + p.cls + '">' + p.name + '</div>' +
+        '<div class="pc-cost">' + costs.join(' <span class="or">ó</span> ') + '</div>' +
+        '<div class="pc-desc">' + p.desc + ' · ' + p.count + ' cartas.</div>' +
+        '<div class="odds">' + oddsRows + '</div>' +
+        '</div>';
+    }).join('');
+
+    return '<div class="sec-title">Marketplace · Ofertas por tiempo limitado</div>' +
+      '<div class="bazaar-head">' +
+      '<span class="bazaar-timer" id="bazaarTimer">' + timeLeftLabel() + '</span>' +
+      '<button class="btn btn-sm btn-blue" id="refreshShopBtn">🔄 Refrescar · 💎 ' + OU.CONST.SHOP_REFRESH_GEMS + '</button>' +
+      '</div>' +
+      '<div class="offer-grid">' + st.shopItems.map(function (o, i) { return offerHTML(o, i); }).join('') + '</div>' +
+      '<div class="sec-title">Tienda de Sobres</div>' +
+      '<div class="shop-grid">' + packs + '</div>' +
+      '<div class="sec-title">Canje de gemas</div>' +
+      '<div class="exchange-card">' +
+      '<div class="ex-item" data-ex="10"><div class="ei-ic">💎→🪙</div><div class="ei-body">10 gemas = <span class="g">' + U.fmt(2000) + ' oro</span></div></div>' +
+      '<div class="ex-item" data-ex="25"><div class="ei-ic">💎→🪙</div><div class="ei-body">25 gemas = <span class="g">' + U.fmt(5500) + ' oro</span></div></div>' +
+      '<div class="ex-item" data-ex="50"><div class="ei-ic">💎→🪙</div><div class="ei-body">50 gemas = <span class="g">' + U.fmt(12000) + ' oro</span></div></div>' +
+      '</div>' +
+      '<p class="battle-hint">💎 Las gemas también sirven para refrescar el Marketplace y para completar entrenamientos al instante.</p>';
+  }
+
+  function bindShop(root) {
+    U.$$('[data-pack]', root).forEach(function (e) {
+      e.addEventListener('click', function () { openPackBuyModal(e.dataset.pack); });
+    });
+    U.$$('[data-ex]', root).forEach(function (e) {
+      e.addEventListener('click', function () { doExchange(parseInt(e.dataset.ex, 10)); });
+    });
+    U.$$('[data-offer]', root).forEach(function (e) {
+      e.addEventListener('click', function () { buyOffer(parseInt(e.dataset.offer, 10)); });
+    });
+    var rf = U.$('#refreshShopBtn');
+    if (rf) rf.addEventListener('click', refreshBazaar);
+  }
+
+  /** ¿Se puede pagar qty sobres con al menos una de las monedas (oro o gemas)? */
+  function canPayQty(p, st, qty) {
+    return (p.cost.gold !== undefined && st.gold >= (p.cost.gold || 0) * qty) ||
+      (p.cost.gems !== undefined && st.gems >= (p.cost.gems || 0) * qty);
+  }
+
+  function qtyPriceLabel(p, n) {
+    var parts = [];
+    if (p.cost.gold !== undefined) parts.push('🪙 ' + U.fmt(p.cost.gold * n));
+    if (p.cost.gems !== undefined) parts.push('💎 ' + U.fmt(p.cost.gems * n));
+    return parts.join(' · ');
+  }
+
+  /** Modal de compra: permite abrir x1, x2 o x5 sobres, conservando los porcentajes. */
+  function openPackBuyModal(packKey) {
+    var p = OU.PACKS[packKey];
+    var st = OU.STATE.state;
+    var costs = [];
+    if (p.cost.gold !== undefined) costs.push('<span class="gold">🪙 ' + U.fmt(p.cost.gold) + '</span>');
+    if (p.cost.gems !== undefined) costs.push('<span class="gem">💎 ' + U.fmt(p.cost.gems) + '</span>');
+    var oddsRows = p.odds.map(function (o) {
+      var l = o[0];
+      var col = l === 'Legado' ? OU.RAR.primordial.color : l === 'Sistema' ? OU.RAR.titan.color : l === 'Framework' ? OU.RAR.god.color : l === 'Lenguaje' ? OU.RAR.hero.color : 'var(--gray)';
+      return '<div class="o-row"><span class="o-l">' + l + '</span><span class="o-v" style="color:' + col + '">' + o[1] + '</span></div>';
+    }).join('');
+    var qtyBtns = [1, 2, 5].map(function (n) {
+      var affordable = canPayQty(p, st, n);
+      return '<button class="pack-qty' + (affordable ? '' : ' locked') + '" data-qty="' + n + '"' + (affordable ? '' : ' disabled') + '>' +
+        '<span class="pq-x">×' + n + '</span>' +
+        '<span class="pq-l">' + qtyPriceLabel(p, n) + '</span>' +
+        '</button>';
+    }).join('');
+    I.openModal(
+      '<div class="pack-buy">' +
+      '<img class="pack-buy-img" src="' + PACK_IMG[p.cls] + '" alt="' + p.name + '" loading="lazy">' +
+      '<div class="pack-buy-name ' + p.cls + '">' + p.name + '</div>' +
+      '<div class="pack-buy-desc">' + p.desc + '</div>' +
+      '<div class="pack-buy-cost">' + costs.join(' <span class="or">ó</span> ') + ' por sobre</div>' +
+      '<div class="odds">' + oddsRows + '</div>' +
+      '<div class="pq-title">¿Cuántos sobres quieres abrir?</div>' +
+      '<div class="pack-qty-row">' + qtyBtns + '</div>' +
+      '<button class="btn btn-ghost btn-block" id="pbClose">Cerrar</button>' +
+      '</div>', true);
+    U.$$('[data-qty]', U.$('#overlay')).forEach(function (b) {
+      b.addEventListener('click', function () {
+        var qty = parseInt(b.dataset.qty, 10);
+        if (!canPayQty(p, st, qty)) return I.toast('No tienes suficientes recursos para ' + qty + ' sobres');
+        I.closeModal();
+        if (p.cost.gold !== undefined && p.cost.gems !== undefined) {
+          openPackChooser(packKey, qty);
+        } else {
+          buyPack(packKey, p.cost.gold !== undefined ? 'gold' : 'gems', qty);
+        }
+      });
+    });
+    var cl = U.$('#pbClose'); if (cl) cl.addEventListener('click', I.closeModal);
+  }
+
+  function buyPack(packKey, currency, qty) {
+    if (openingBusy) return;
+    qty = qty || 1;
+    var p = OU.PACKS[packKey];
+    var st = OU.STATE.state;
+
+    // Sobres con doble precio (oro → gemas): elegir moneda.
+    if (!currency && p.cost.gold !== undefined && p.cost.gems !== undefined) {
+      openPackChooser(packKey, qty);
+      return;
+    }
+    var costGold = (p.cost.gold || 0) * qty;
+    var costGems = (p.cost.gems || 0) * qty;
+    if (costGold > 0 && (!currency || currency === 'gold')) {
+      if (st.gold < costGold) return I.toast('No tienes suficiente oro 🪙');
+      st.gold -= costGold;
+    } else if (costGems > 0) {
+      if (st.gems < costGems) return I.toast('No tienes suficientes gemas 💎');
+      st.gems -= costGems;
+    }
+    OU.STATE.save();
+    I.updateTopRes();
+    var opens = [];
+    for (var i = 0; i < qty; i++) {
+      var pulls = U.generatePulls(p);
+      opens.push(pulls);
+      pulls.forEach(function (pid) {
+        if (!st.cards[pid]) st.cards[pid] = { lvl: 1, dup: 0, xp: 0 };
+        else st.cards[pid].dup++;
+        st.seen[pid] = true;
+      });
+    }
+    OU.STATE.save();
+    showPackOpenings(p, opens);
+  }
+
+  /** Modal para elegir moneda al comprar un sobre premium. */
+  function openPackChooser(packKey, qty) {
+    qty = qty || 1;
+    var st = OU.STATE.state;
+    var p = OU.PACKS[packKey];
+    var canGold = st.gold >= p.cost.gold * qty;
+    var canGems = st.gems >= p.cost.gems * qty;
+    I.openModal(
+      '<div class="sec-title" style="margin-top:10px">🎁 ' + p.name + ' ×' + qty + '</div>' +
+      '<p style="font-size:12.5px;color:var(--dim);text-align:center;margin:4px 0 12px">¿Con qué moneda deseas pagar?</p>' +
+      '<div class="chooser-row" style="border-color:' + (canGold ? 'var(--gold2)' : 'var(--line)') + ';opacity:' + (canGold ? 1 : 0.4) + '" data-pay="gold">' +
+      '<span class="ch-ic">🪙</span>' +
+      '<span class="ch-txt">' + (canGold ? 'Pagar con oro' : 'Oro insuficiente (necesitas ' + U.fmt(p.cost.gold * qty) + ')') + '</span>' +
+      '<span class="ch-price">' + U.fmt(p.cost.gold * qty) + '</span>' +
+      '</div>' +
+      '<div class="chooser-row" style="border-color:' + (canGems ? 'var(--blue)' : 'var(--line)') + ';opacity:' + (canGems ? 1 : 0.4) + '" data-pay="gems">' +
+      '<span class="ch-ic">💎</span>' +
+      '<span class="ch-txt">' + (canGems ? 'Pagar con gemas' : 'Gemas insuficientes (necesitas ' + (p.cost.gems * qty) + ')') + '</span>' +
+      '<span class="ch-price">' + (p.cost.gems * qty) + '</span>' +
+      '</div>' +
+      '<button class="btn btn-ghost btn-block" id="chClose" style="margin-top:12px">Cancelar</button>', true);
+    U.$$('[data-pay]', U.$('#overlay')).forEach(function (row) {
+      row.addEventListener('click', function () {
+        var cur = row.dataset.pay;
+        if (cur === 'gold' && st.gold < p.cost.gold * qty) { I.toast('No tienes suficiente oro 🪙'); return; }
+        if (cur === 'gems' && st.gems < p.cost.gems * qty) { I.toast('No tienes suficientes gemas 💎'); return; }
+        I.closeModal();
+        buyPack(packKey, cur, qty);
+      });
+    });
+    var cl = U.$('#chClose'); if (cl) cl.addEventListener('click', I.closeModal);
+  }
+
+  function isNew(id) {
+    return OU.STATE.state.cards[id] && OU.STATE.state.cards[id].dup === 0;
+  }
+
+  /* Efectos especiales de revelado según la rareza de la carta. */
+  var RAR_FX = {
+    god: { cls: 'fx-god', badge: 'b-god', label: '¡FRAMEWORK DESPLEGADO!' },
+    titan: { cls: 'fx-titan', badge: 'b-titan', label: '¡SISTEMA COMPILADO!' },
+    primordial: { cls: 'fx-primordial', badge: 'b-primordial', label: '¡LEGADO CONTIGUO!' }
+  };
+
+  function bigCardHTML(pid) {
+    var c = OU.CARD_BY_ID[pid], r = OU.RAR[c.r];
+    return '<div class="rv-big" style="--glow:' + r.glow + ';border-color:' + r.color + '">' +
+      (isNew(pid) ? '<div class="new-tag">NUEVA</div>' : '') +
+      '<div class="rv-big-art">' + I.artHTML(pid, 'big-art') + '</div>' +
+      '<div class="rv-big-in">' +
+      '<div class="rv-big-n" style="color:' + r.color + '">' + c.n + '</div>' +
+      '<div class="rv-big-r" style="color:' + r.color + '">' + r.name.toUpperCase() + '</div>' +
+      '</div></div>';
+  }
+
+  function rvMiniHTML(pid) {
+    var c = OU.CARD_BY_ID[pid], r = OU.RAR[c.r];
+    return '<div class="rv-mini" style="--glow:' + r.glow + ';border-color:' + r.color + '">' +
+      (isNew(pid) ? '<div class="new-tag">NUEVA</div>' : '') +
+      '<div class="rv-mini-art">' + I.artHTML(pid, 'big-art') + '</div>' +
+      '<div class="rv-mini-n" style="color:' + r.color + '">' + c.n + '</div>' +
+      '</div>';
+  }
+
+  async function showPackOpenings(p, opens) {
+    openingBusy = true;
+    var cls = p.cls;
+    I.openModal(
+      '<div class="pack-stage">' +
+      '<div class="pc-name" style="font-size:20px;font-weight:800;letter-spacing:0.5px;color:var(--gold2)">' + p.name + '</div>' +
+      '<div class="pack-box ' + cls + '" id="packBox">' +
+      '<img class="pb-img" src="' + PACK_IMG[cls] + '" alt="' + p.name + '">' +
+      '</div>' +
+      '<div class="pack-msg" id="packMsg">Toca el sobre para abrirlo</div>' +
+      '<div class="rarity-banner" id="rarBanner"></div>' +
+      '<div class="reveal-big" id="revealBig"></div>' +
+      '<div class="reveal-count" id="revealCount"></div>' +
+      '<div class="reveal-grid" id="revealGrid"></div>' +
+      '<div class="pack-costs" id="packCosts"></div>' +
+      '</div>', false);
+
+    var box = U.$('#packBox'), msg = U.$('#packMsg'), big = U.$('#revealBig');
+    var grid = U.$('#revealGrid'), count = U.$('#revealCount'), banner = U.$('#rarBanner');
+
+    for (var n = 0; n < opens.length; n++) {
+      var pulls = opens[n];
+      resetBox(box, msg, opens.length, n);
+      var opened = false;
+      box.addEventListener('click', function () { opened = true; });
+      // espera al toque
+      var guard = 60000;
+      while (!opened && guard > 0) {
+        await U.sleep(120); guard -= 120;
+      }
+      if (!opened) { openingBusy = false; I.closeModal(); return; }
+
+      box.classList.add('shake');
+      await U.sleep(900);
+      box.style.animation = 'none';
+      box.style.transform = 'scale(0)';
+      box.style.transition = 'transform .45s ease';
+      box.style.display = 'none';
+      msg.textContent = '¡Se compilan los paquetes del destino...!';
+      await U.sleep(500);
+
+      for (var i = 0; i < pulls.length; i++) {
+        var pid = pulls[i];
+        var fx = RAR_FX[OU.CARD_BY_ID[pid].r];
+        big.className = 'reveal-big' + (fx ? ' ' + fx.cls : '');
+        big.innerHTML = bigCardHTML(pid);
+        if (fx) {
+          banner.textContent = fx.label;
+          banner.className = 'rarity-banner show ' + fx.badge;
+        } else {
+          banner.className = 'rarity-banner';
+        }
+        big.classList.remove('show'); void big.offsetWidth; big.classList.add('show');
+        count.textContent = 'Carta ' + (i + 1) + ' de ' + pulls.length;
+        playPop();
+        await U.sleep(1150);
+        grid.insertAdjacentHTML('beforeend', rvMiniHTML(pid));
+        playPop();
+        big.classList.remove('show');
+        banner.className = 'rarity-banner';
+        await U.sleep(250);
+      }
+      big.innerHTML = '';
+    }
+    count.textContent = '';
+    msg.innerHTML = (opens.length > 1 ? '¡' + opens.length + ' sobres abiertos!' : '¡Sobre abierto!') + ' · Las cartas se añadieron a tu colección.';
+    var btn = document.createElement('button');
+    btn.className = 'btn btn-gold btn-block'; btn.id = 'collectBtn'; btn.style.marginTop = '14px';
+    btn.textContent = 'Recoger y continuar';
+    U.$('#packCosts').appendChild(btn);
+    btn.addEventListener('click', function () { I.closeModal(); OU.MAIN.render(); });
+    openingBusy = false;
+  }
+
+  function resetBox(box, msg, total, idx) {
+    box.style.display = '';
+    box.style.animation = '';
+    box.style.transform = '';
+    box.style.transition = '';
+    box.classList.remove('shake');
+    msg.innerHTML = (total > 1 ? 'Sobre ' + (idx + 1) + ' de ' + total + ' · ' : '') + 'Toca el sobre para abrirlo';
+  }
+
+  function doExchange(gems) {
+    var st = OU.STATE.state;
+    var gold = { 10: 2000, 25: 5500, 50: 12000 }[gems] || 0;
+    if (st.gems < gems) return I.toast('No tienes suficientes gemas 💎');
+    st.gems -= gems; st.gold += gold;
+    OU.STATE.save(); I.updateTopRes();
+    I.toast('Canjeaste ' + gems + '💎 por ' + U.fmt(gold) + '🪙');
+    OU.MAIN.render();
+  }
+  /* Reloj del Marketplace: actualiza la cuenta atrás mientras la tienda está abierta. */
+  var shopTimer = null;
+  function startShopTimer() {
+    if (shopTimer) return;
+    shopTimer = setInterval(function () {
+      if (OU.MAIN.currentTab !== 'shop') return;
+      var el = U.$('#bazaarTimer');
+      if (el) el.textContent = timeLeftLabel();
+    }, 30000);
+  }
+
+  var audioCtx = null;
+  function audio() {
+    try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+    return audioCtx;
+  }
+  function playPop() {
+    try {
+      var ctx = audio();
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'triangle'; o.frequency.value = 500 + Math.random() * 300;
+      g.gain.setValueAtTime(0.12, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.16);
+      o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime + 0.16);
+    } catch (e) {}
+  }
+
+  OU.SHOP = {
+    viewShop: viewShop,
+    bindShop: bindShop,
+    buyPack: buyPack,
+    openPackBuyModal: openPackBuyModal,
+    doExchange: doExchange,
+    buyOffer: buyOffer,
+    refreshBazaar: refreshBazaar,
+    ensureBazaar: ensureBazaar,
+    makeOffer: makeOffer,
+    playPop: playPop,
+    audio: audio,
+    startShopTimer: startShopTimer,
+    get openingBusy() { return openingBusy; }
+  };
+})();

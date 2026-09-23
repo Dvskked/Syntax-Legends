@@ -1,0 +1,257 @@
+# 🏛️ Olympus Unbound
+
+**Un juego de cartas y colección de mitología griega** — jugable directamente en el navegador, sin instalación ni servidor.
+
+Forja tu legado entre mortales, héroes, dioses, titanes, primordiales y hasta el propio **Creador** en un auto-battler con arte local por carpetas en `img/`, modo entrenamiento, economía pasiva y una estética oscura vibrante con acentos dorados, azules y púrpuras inspirada en títulos como *Dungeon Crusher* y *AFK Arena*.
+
+> 🎮 **Juega ahora:** abre `index.html` en cualquier navegador moderno (móvil o desktop). Tu progreso se guarda automáticamente con `localStorage`.
+
+---
+
+## ✨ Características
+
+| Sistema | Descripción |
+|---|---|
+| 🖼️ **103 cartas con arte local** | Ilustraciones organizadas en `img/personajes/<rareza>/<id>.png` (normal · héroe · dios · titán · primordial · creador) con fallback a emoji |
+| 🃏 **6 rangos de cartas** | Normales, Héroes, Dioses, Titanes, Primordiales y el **Creador** — exclusivo e imposible de obtener por sobres o Bazar. Cada rango con su propio **aura**: gris plano (Normal), azul pulsante (Héroe), rayos dorados girando (Dios), **rocas púrpuras que tiemblan** (Titán), blanco radiante palpitante (Primordial) y **rojo + negro cegador** que supera a las demás (Creador) |
+| 🎁 **7 sobres** | Bronce, Plata, Oro, Épico, Olimpo, Divino y Cósmico con animación de apertura **carta por carta** y garantías por rareza. Los **Primordiales** solo salen en el Cósmico (tope de 1 Titán + 1 Primordial por sobre); el **Creador** nunca entra en ningún sobre |
+| 📖 **Índice de Leyendas** | Muestra TODAS las cartas del juego (desbloqueadas y por desbloquear) ordenadas de la más poderosa a la más débil, con filtros por rareza y estado |
+| 🎮 **5 minijuegos** | El Oráculo, el Desafío del Dios, la Ruleta del Destino (¡giro gratis diario!), el Dado de Zeus y la Memoria de Orfeo — cada uno con su propio **logo** en `img/minijuegos/` |
+| 🏪 **Bazar con ofertas rotativas** | **5 ofertas** que se renuevan cada **12 horas** (cartas, oro, gemas, XP, refinamiento de Hefesto y potenciadores de Ágora) comprables con oro o gemas; entre ellas **siempre hay 1 dios gratuito** 🆓 |
+| 🪙 **Economía dorada** | Ágora que genera mucho más oro pasivo por minuto (con reloj offline), recompensas de batalla crecientes y mejora cada vez más cara según progresas |
+| 🏋️ **Modo Entrenamiento** | Entrena **hasta 3 cartas a la vez** (1, 3, 8, 20 o 60 min) para ganar XP, oro y gemas sin gastar duplicados. Con **límites anti-farm**: 5 stocks de mejora por carta, máx. 3 sesiones de la misma carta y máx. 10 niveles por cada 12 h ("acelerar" gasta más gemas de las que da la sesión) |
+| 💎 **Gemas con utilidad** | Acelerar entrenamientos, refrescar el Bazar al instante, canjear por oro, sobras premium y recompensas de la Memoria de Orfeo |
+| 📜 **Colección** | Inventario completo, contador de duplicados, subida de nivel con oro + duplicados, subida solo con oro (sin duplicados) y subida por XP de entrenamiento |
+| 🛡️ **Mi Equipo** | 5 ranuras de batalla y poder total calculado en tiempo real, con el botón **"Equipar los mejores"** para auto-rellenar el equipo más fuerte |
+| 🏆 **Colección estilo arena** | 3 barras de filtros: **Rareza**, **Rol** (🏰 Tanques · ⚔️ Guerreros · 🔮 Magos · ✨ Soportes) y **Orden** (por rareza o ⚡ los mejores por poder) |
+| 🖥️ **UI renovada** | Pantalla principal rediseñada según boceto: **HUD flotante** con tu perfil, oro y gemas; **Mi Equipo** al centro con fichas grandes; accesos **Mercadeo · Campaña · Índice** con iconos propios redondos (`img/extras/icons/`); menú inferior de **4 óvalos que solo aparece en el inicio**; **foto de perfil** en el onboarding; pantalla de carga con logo y botón Jugar, y **guía de bienvenida** para nuevos jugadores |
+| ⚔️ **Modo Batalla** | Auto-battler visual con fichas circulares, barras de vida/energía, poderes especiales, números voladores y **100 fases** de campaña |
+| 📈 **Progresión** | Hasta 100 niveles por carta con curva de costes suave y duplicados limitados: subir de nivel siempre es alcanzable con el oro de batallas y del Ágora |
+| 💾 **Guardado** | Todo el progreso persistido con `localStorage` (clave `olympus_unbound_v2`) |
+| 🖥️ **Responsive** | Interfaz adaptada a móviles, tablets y desktop con **tema oscuro cálido**: en pantallas pequeñas el inicio se recoloca en una columna desplazable y el menú de 4 óvalos se mantiene flotante solo en el inicio |
+
+---
+
+## 🎮 Cómo jugar
+
+1. **Compra sobres** 🏛️ en la Tienda para conseguir cartas (empiezas con 🪙 3.000 y 💎 50, además de 3 cartas de arranque).
+2. **Asigna cartas** a "Mi Equipo" 🛡️ (máximo 5 integrantes) tocando cada ranura, o usa **"Equipar los mejores"** para auto-rellenarlo con tus cartas más fuertes.
+3. **Combate** ⚔️ en la campaña y vence las 100 fases de dificultad creciente.
+4. **Entrena** 🏋️ hasta 3 cartas a la vez antes de una batalla difícil: vuelve cuando el reloj acabe y recoge XP, 🪙 y a veces 💎 (o acelera al instante gastando gemas).
+5. **Recoge el Ágora** 💰 cada vez que estés fuera: el oro pasivo se acumula hasta un tope.
+6. **Mejora tus cartas** 📜 consumiendo duplicados + oro, o con XP de entrenamiento (¡no gasta duplicados!), o pagando solo oro como acceso directo.
+7. **Visita el Bazar** 🏪 cada pocas horas: 5 ofertas que se renuevan cada 12 h (la 5.ª es un **dios gratis**), comprables con oro o gemas (refresco manual: 💎 8).
+8. **Reclama tu recompensa diaria** 🎁 cada día que entres (💎 2 + racha) y gana oro rápido 🎮 en los Minijuegos: el Oráculo, el Desafío del Dios, la Ruleta con su giro gratis diario, el Dado de Zeus y la Memoria de Orfeo.
+9. **Completa tu Índice** 📖 consultando qué cartas te faltan, de la más fuerte a la más débil.
+10. **Cada carta** tiene un rol (Tanque, Guerrero, Mago o Soporte) y una habilidad especial que se activa al llenar la barra de energía 💫.
+
+### Probabilidades de los sobres
+
+| Sobre | Coste | Cartas | Normales | Héroes | Dioses | Titanes | Primordiales | Garantía |
+|---|---|---|---|---|---|---|---|---|
+| **Bronce** | 🪙 200 | 3 | 86% | 13.3% | 0.6% | 0.1% | — | — |
+| **Plata** | 🪙 450 | 4 | 71% | 27.8% | 1.1% | 0.1% | — | — |
+| **Oro** | 🪙 900 | 5 | 55% | 42.4% | 2.4% | 0.2% | — | — |
+| **Épico** | 🪙 1.800 | 5 | 44% | 50.2% | 5.5% | 0.3% | — | ≥1 Héroe |
+| **Olimpo** | 💎 40 | 5 | 22% | 64% | 13.4% | 0.6% | — | ≥1 Héroe |
+| **Divino** | 💎 90 | 6 | 12% | 53.4% | 32.2% | 2.4% | — | ≥1 Dios |
+| **Cósmico** | 💎 160 | 6 | 10% | 42% | 34% | 10% | 4% | ≥1 Dios |
+
+Las gemas también pueden canjearse por oro: 💎 10 → 🪙 2.000 · 💎 25 → 🪙 5.500 · 💎 50 → 🪙 12.000, usarse para refrescar el Bazar (💎 8) o para terminar al instante un entrenamiento. Además, **al entrar al juego cada día** ganas una **recompensa diaria** de 💎 (2 + racha, hasta 10).
+
+> El **Sobre Cósmico** respeta un tope de **1 Titán y 1 Primordial** por apertura (si se repiten, se reemplazan por una rareza menor). **Ningún sobre ni el Bazar puede entregar al Creador**: esa carta es exclusiva del propio Andrés 👑, el autor del Olimpo.
+
+### Entrenamiento (descripción de sesiones)
+
+| Sesión | Duración | XP | Oro | Gemas |
+|---|---|---|---|---|
+| Rápido | 1 min | 45 | 90 | — |
+| Activo | 3 min | 150 | 280 | — |
+| Élite | 8 min | 480 | 840 | 2 |
+| Legendario | 20 min | 1.350 | 2.400 | 5 |
+| Primordial | 60 min | 4.800 | 8.000 | 12 |
+
+El progreso de entrenamiento se basa en timestamps, así que **sigue avanzando aunque cierres el juego** (igual que el Ágora). Puedes entrenar **hasta 3 cartas a la vez**, con estos **límites por cada 12 h**:
+- **5 stocks de mejora** por carta (cada sesión completada consume 1 stock).
+- Máximo **3 sesiones simultáneas de la misma carta**.
+- Máximo **10 niveles** ganados por entrenamiento (y hasta **3 niveles por recogida**).
+- *Completar ahora* cuesta gemas y **nunca es rentable**: el coste supera las gemas que daría la sesión (sin bucles infinitos).
+
+
+
+### 🏪 Bazar (ofertas de 12 h)
+
+Cada 12 horas se generan 5 ofertas nuevas — **la 5.ª siempre es un dios totalmente gratis** 🆓 (una por renovación) — con un coste mixto (🪙 oro o 💎 gemas):
+
+| Oferta | Efecto |
+|---|---|
+| 🆓 **Dios gratis** | 1 dios aleatorio de regalo por cada renovación (12 h) |
+| 🎴 Carta rara | Consigue una carta de una rareza sorteada (más barata que un sobre) |
+| 🪙 Lote de oro | Intercambio directo de gemas por oro (o viceversa según precio) |
+| 💎 Lote de gemas | Oro convertido en gemas |
+| 📚 Paquete de XP | +XP a **todas** tus cartas de golpe |
+| 🔨 Refinamiento de Hefesto | Elige qué carta sube 1 nivel al instante |
+| 🌾 Potenciador de Ágora | +50% de ingreso pasivo durante 12 h |
+
+El temporizador de renovación es visible en la cabecera del Bazar; puedes adelantarlo pagando 💎 8.
+
+---
+
+## 🛡️ Roles y habilidades
+
+- **Tanque** 🏰 — Alta vida y defensa. Habilidad: escudo que absorbe daño.
+- **Guerrero** ⚔️ — Ataque equilibrado. Habilidad: golpe devastador o daño en área.
+- **Mago** 🔮 — Daño masivo. Habilidad: ataca a todos los enemigos.
+- **Soporte** ✨ — Cura y potencia aliados. Habilidad: sanación o aumento de ATK.
+
+## ✨ Auras por rareza
+
+Cada carta emana un aura visible según su rango, tanto en la colección y el índice como en el campo de batalla (fichas) y al abrir sobres:
+
+| Rango | Aura |
+|---|---|
+| **Normal** | Borde gris sutil y tenue, casi plano |
+| **Héroe** | Aura azul pequeña con anillo pulsante |
+| **Dios** | **Rayos dorados girando** alrededor de la carta |
+| **Titán** | Aura **púrpura** con bordes de roca irregulares que **tiemblan** como un terremoto |
+| **Primordial** | Aura blanca cegadora que late como un sol interno, con brillo expandiéndose y contrayéndose |
+| **Creador** | **Rojo furioso + negro profundo** con rayos giratorios rápidos y doble anillo: supera visualmente a todas las demás. **Exclusivo e inalcanzable** (ni sobres ni Bazar) — solo se desbloquea siguiendo al creador en GitHub e Instagram |
+
+## 👑 Cartas incluidas (103)
+
+> ⚡ **No todo el poder sigue la rareza**: héroes legendarios como Aquiles, Hércules, Héctor o Ayax superan en combate a dioses menores (mensajeros y auroras como Eos o Iris), tal como manda la mitología. La rareza marca el piso, pero el individuo define el techo.
+
+- **Normales (24):** Hoplita Espartano, Guardia Troyana, Arquero Cretense, Peltasta Tracio, Sátiro Arremetedor, Sacerdotisa de Delfos, Guardia Cretense, Fiel Mirmidón, Antíloco, Palamedes, Casandra, Telémaco, Laertes, Pirítoo, Podalirio, Macaón, Protesilao, Dríade del Roble, Teucro el Arquero, Frixo, Hele la Náufraga, Teoclímeno, Idomeneo, Pólux.
+- **Héroes (24):** Aquiles, Hércules, Perseo, Teseo, Ulises, Atalanta, Orfeo, Andrómeda, Jasón, Héctor, Ayax el Grande, Diomedes, Menelao, Belerofonte, Eneas, Peleo, Meleagro, Antíope, Quirón, Sirena, Arpía, Gorgona, Filoctetes, Néstor.
+- **Dioses (22):** Zeus, Poseidón, Hades, Atenea, Ares, Artemisa, Hefesto, Apolo, Hera, Hermes, Dioniso, Deméter, Afrodita, Éolo, Eos, Iris, Pan, Hécate, Niké, Eris, Hebe, Hipnos.
+- **Titanes (20):** Cronos, Océano, Hiperión, Jápeto, Atlas, Crío, Tetis, Temis, Mnemósine, Réa, Febe, Prometeo, Epimeteo, Astreo, Perses, Dione, Tifón, Équidna, Ofión, Eurínome.
+- **Primordiales (12):** Caos, Éter, Hemera, Eros, Ananké, Fanes, Gea, Urano, Nix, Érebo, Tártaro, Ponto.
+
+> 📌 Las entidades **primordiales mal ubicadas** se reubicaron a su rango real: Gea, Urano, Nix, Érebo, Tártaro y Ponto **ascienden a Primordial** (esencia del origen), mientras que los monstruos y descendientes Tifón, Équidna, Ofión y Eurínome **pasan a Titán**.
+
+- **Creador (1):** Andrés 👑 — el Arquitecto del Olimpo. Carta exclusiva marcada como `locked`: ningún sobre ni el Bazar pueden entregarla. Para desbloquearla, en la Tienda → *El Creador* debes **seguir a Andrés en GitHub ([@Dvskked](https://github.com/Dvskked)) e Instagram ([@_andres.nox](https://www.instagram.com/_andres.nox/))**, confirmarlo y reclamar tu **única carta**. Existe 1 solo stock: no se duplica. Se mejora **solo con oro** (no acepta duplicados ni entrenamiento). Su aura rojo + negro con rayos giratorios supera a todas las demás.
+
+---
+
+## ⚔️ Sistema de combate
+
+- Combate **automático por turnos** con orden de iniciativa (velocidad) en un campo visual: tu equipo se alinea en la **izquierda** y los enemigos a la **derecha**, cada uno como una ficha circular (avatar, barra de vida y barra de energía).
+- Al atacar, la ficha **embiste** hacia su objetivo; al recibir daño se muestra un **temblor**, un anillo de impacto y **números voladores** de daño.
+- Barras de **energía** que se llenan con cada golpe recibido/infligido; al 100% la ficha **destella**, lanza una **onda expansiva** y libera su poder especial.
+- Cuando la vida de una ficha llega a 0, esta se **desvanece** del campo de batalla.
+- Botón de **velocidad ×1 / ×2**, sonido sintetizado y opción de retirarse.
+- **Recompensas** por victoria: oro, XP y posiblemente gemas. Al perder puedes **reintentar** la fase.
+- **100 fases**: desde *Bandidos de la Ruta* hasta *Tifón, el Devorador de Dioses*, coronado por los Primordiales.
+
+---
+
+## 🖥️ Stack técnico
+
+- **HTML5 + CSS3 + JavaScript** modular: HTML, CSS y JS separados, sin dependencias ni build steps.
+- Código organizado en un namespace global `window.OU` con IIFEs cargados en orden vía etiquetas `<script>` (compatible con `file://` — sin ES modules).
+- **Listo para TypeScript**: configuración `tsconfig.json` + JSDoc en cada módulo. Ejecuta `npx tsc` (o `npm run check`) para validar tipos.
+- Pack de test `node tests/run-all.js` (`npm test`) valida datos, probabilidades, mecánicas y el motor de combate con DOM simulado.
+- Tipografía *sans-serif* del sistema (sin dependencias externas).
+- Arte de las cartas en cadena de fallbacks: primero busca `img/personajes/<rareza>/<id>.png` (y variantes `.jpg`/`.webp`), y si no existe, se muestra el emoji de la carta.
+- Persistencia mediante `localStorage` (clave `olympus_unbound_v2`).
+
+---
+
+## 🚀 Puesta en marcha
+
+```bash
+# Opción 1: simplemente abre el archivo
+start index.html       # Windows
+open index.html        # macOS / Linux
+```
+
+```bash
+# Opción 2: sirvelo con cualquier servidor estático
+npx serve .
+# y visita http://localhost:3000
+```
+
+> **Nota:** el arte de las cartas se busca primero en la carpeta `img/` (offline, `img/personajes/<rareza>/<id>.png`); si no existe la imagen local, el juego usa el emoji de la carta. Todo funciona 100% offline, sin fuentes ni recursos externos.
+
+---
+
+## 🗂️ Estructura
+
+```
+Olympus Unbound/
+├── index.html          # Esqueleto: carga CSS + módulos JS en orden
+├── css/
+│   └── style.css       # Tema oscuro vibrante: una sola fuente sans, acentos dorado/azul/púrpura
+├── img/                # Arte local organizado por carpetas
+│   ├── personajes/     #   <rareza>/<id>.png (normal · heroe · dios · titan · primordial · creador)
+│   ├── sobres/         #   arte de los 7 sobres (sobre_bronce.jpg → sobre_cosmico.png)
+│   ├── minijuegos/     #   logos de los 5 minijuegos
+│   ├── extras/logo/    #   logo-olympus.png (favicon e inicio)
+│   └── extras/icons/   #   iconos del inicio: campaña, índice (indnice) y mercadeo
+├── js/                 # Módulos (namespace global window.OU)
+│   ├── 00-img.js       # Mapa de arte real por carta (OU.IMG)
+│   ├── 01-data.js      # Constantes, cartas, sobres, fases, entrenamiento (OU.CONST/RAR/PACKS/CARDS/STAGES/TRAIN)
+│   ├── 02-state.js     # Estado, guardado/carga, timestamps, ingreso pasivo (OU.STATE)
+│   ├── 03-utils.js     # Cálculos: nivel, costos, probabilidades, formato (OU.UTIL)
+│   ├── 04-ui.js        # Arte, chips, toast, modales (OU.UI)
+│   ├── 05-shop.js      # Tienda, sobres, canje de gemas y Bazar de 12 h (OU.SHOP)
+│   ├── 06-collection.js# Colección, filtros, detalle y mejoras (OU.COLLECTION)
+│   ├── 07-team.js      # Equipo, selector de ranuras y "Equipar los mejores" (OU.TEAM)
+│   ├── 08-battle.js    # Motor de combate y campaña (OU.BATTLE)
+│   ├── 09-training.js  # Ágora + entrenamiento de hasta 3 cartas (OU.TRAIN)
+│   ├── 10-main.js      # Pestañas, render y arranque (OU.MAIN)
+│   ├── 11-index.js     # Índice de Leyendas: todas las cartas por poder (OU.INDEX)
+│   └── 12-games.js     # 5 minijuegos: Oráculo, RPS, Ruleta, Dado de Zeus y Memoria (OU.GAMES)
+├── tests/
+│   └── run-all.js      # Suite de pruebas (Node: DOM simulado)
+├── tsconfig.json       # Chequeo TypeScript sobre el JS (npx tsc)
+└── README.md           # Este documento
+```
+
+---
+
+## 🧪 Pruebas
+
+```bash
+npm test          # ejecuta tests/run-all.js (valida datos, mecánicas y motor)
+npm run check     # npx tsc — valida tipos sobre los módulos JS
+```
+
+---
+
+## 🛣️ Roadmap (ideas)
+
+- [x] **Minijuegos** para ganar oro y gemas al instante (Oráculo, RPS, Ruleta, Dado, Memoria).
+- [x] **Bazar** con ofertas rotativas cada 12 horas y compras con oro/gemas.
+- [x] **Entrenamiento** de hasta 3 cartas a la vez y gemas con más utilidad.
+- [x] **Rango Creador** con carta exclusiva e inalcanzable (Andrés 👑) — desbloqueo real siguiendo su GitHub e Instagram.
+- [x] **Recompensas diarias** de gemas al entrar al juego y **dios gratis** cada 12 h en el Bazar.
+- [x] **Límites anti-farm** de entrenamiento (stock, misma carta y tope de 10 niveles / 12 h).
+- [x] **Pantalla de carga** con logo y botón Jugar, y **guía de bienvenida** en 7 pasos.
+- [x] **Reorganización mitológica**: los seis primordiales desubicados vuelven a Primordial y los monstruos pasan a Titán.
+- [x] **Imágenes por carpetas** (`img/personajes/<rareza>/`, `img/sobres/`, `img/minijuegos/`, `img/extras/logo/`).
+- [x] **Colección con filtros** por rareza, rol y orden (estilo Clash Royale).
+- [x] **Pantalla principal según boceto**: HUD de usuario flotante (perfil, oro, gemas), **Mi Equipo** central grande, accesos Mercadeo/Campaña/Índice con iconos propios redondos y **menú inferior de 4 óvalos** que solo aparece en el inicio.
+- [x] **Onboarding con foto de perfil**, tema oscuro cálido y rediseño responsive móvil/tablet/desktop.
+- [ ] Modo PvP contra equipos de otros reinos.
+- [ ] Eventos diarios y misiones con recompensas.
+- [ ] BGM de ambientación y más efectos de sonido.
+- [ ] Más cartas épicas y jefes mitológicos.
+- [ ] Arena de todos contra todos con reclutamiento automático de NPCs.
+- [ ] Soporte multilenguaje (ES / EN).
+
+---
+
+## 🎨 Arte
+
+- **Cartas:** se cargan desde `img/personajes/<rareza>/<id>.png` (una subcarpeta por rango: `normal`, `heroe`, `dios`, `titan`, `primordial`, `creador`). Los **Primordiales**, **Titanes** y el **Creador** ya tienen arte; el resto usa el emoji de la carta.
+- **Sobres:** `img/sobres/` — un arte por tipo de sobre.
+- **Minijuegos:** `img/minijuegos/` — logo de cada minijuego.
+- **Logo:** `img/extras/logo/logo-olympus.png` — inicio y favicon con hover brillante.
+- **Iconos del inicio:** `img/extras/icons/` — campaña, índice (índide) y mercadeo como **anillos redondos flotantes** sin borde (`campaña.png`, `indnice.png`, `mercadeo.png`).
+
+Todo funciona 100% offline, sin fuentes ni recursos externos.
+
+---
+
+Hecho con ⚡ por y para amantes de la mitología griega. **¡Que los dioses te sean propicios!**

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Syntax Legends</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" type="image/png" href="img/extras/logo/syntaxis-fondo.png">
+<link rel="apple-touch-icon" href="img/extras/logo/syntaxis-fondo.png">
+</head>
+<body>
+<div id="loader">
+  <div class="ld-wrap">
+    <div class="ld-logo-wrap"><img class="ld-logo" src="img/extras/logo/syntaxis-fondo.png" alt="Syntax Legends" onerror="this.style.display='none'"></div>
+    <div class="ld-title">SYNTAX LEGENDS</div>
+    <div class="ld-sub" id="ldSub">Cargando el reino del código…</div>
+    <div class="ld-track"><div class="ld-fill" id="ldFill"></div></div>
+    <div class="ld-pct" id="ldPct">0%</div>
+    <button class="btn btn-gold ld-play" id="ldPlay" disabled>🎮 Jugar</button>
+  </div>
+</div>
+<div id="app">
+  <header id="topbar">
+    <button class="user-hud" id="userHud" title="Tu perfil · tocar para editar">
+      <span class="uh-avatar" id="uhAvatar">👤</span>
+      <span class="uh-name" id="uhName">Héroe</span>
+    </button>
+    <div id="resRow">
+      <div class="chip gold-chip" data-goto="shop" title="🪙 Oro · tocar para abrir el Mercadeo"><span class="ic">🪙</span><span id="goldTxt">0</span></div>
+      <div class="chip gem-chip" data-goto="shop" title="💎 Gemas · tocar para abrir el Mercadeo"><span class="ic">💎</span><span id="gemsTxt">0</span></div>
+    </div>
+  </header>
+  <main id="view"></main>
+</div>
+
+<nav id="tabs" aria-label="Menú principal">
+  <button class="tab" data-tab="story"><span class="t-ic">🏺</span>Historia</button>
+  <button class="tab" data-tab="collection"><span class="t-ic">🃏</span>Personajes</button>
+  <button class="tab" data-tab="news"><span class="t-ic">📰</span>Noticias</button>
+  <button class="tab" data-tab="daily"><span class="t-ic">🎁</span>Recompensas</button>
+  <button class="tab" data-tab="training"><span class="t-ic">🏋️</span>Entrenar</button>
+  <button class="tab" data-tab="games"><span class="t-ic">🎪</span>Minijuegos</button>
+</nav>
+
+<div id="overlay"></div>
+<div id="toast"></div>
+
+<script src="js/00-img.js"></script>
+<script src="js/01-data.js"></script>
+<script src="js/02-state.js"></script>
+<script src="js/03-utils.js"></script>
+<script src="js/04-ui.js"></script>
+<script src="js/05-shop.js"></script>
+<script src="js/06-collection.js"></script>
+<script src="js/07-team.js"></script>
+<script src="js/08-battle.js"></script>
+<script src="js/09-training.js"></script>
+<script src="js/10-main.js"></script>
+<script src="js/11-index.js"></script>
+<script src="js/12-games.js"></script>
+</body>
+</html>

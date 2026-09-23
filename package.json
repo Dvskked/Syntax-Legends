@@ -1,0 +1,11 @@
+{
+  "name": "syntax-legends",
+  "version": "3.0.0",
+  "description": "Auto-battler de colección de lenguajes de programación. HTML + JS modular listo para TypeScript (JSDoc).",
+  "scripts": {
+    "check": "tsc",
+    "test": "node tests/run-all.js"
+  },
+  "keywords": ["juego", "cartas", "lenguajes", "programacion", "auto-battler"],
+  "license": "MIT"
+}
